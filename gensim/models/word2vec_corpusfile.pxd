@@ -1,4 +1,5 @@
 # distutils: language = c++
+# cython: language_level=3
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
@@ -21,6 +22,14 @@ cimport numpy as np
 ctypedef np.float32_t REAL_t
 
 
+# cdef extern from "fast_line_sentence.h":
+#     cdef cppclass FastLineSentence:
+#         FastLineSentence() except +
+#         FastLineSentence(string&, size_t) except +
+#         vector[string] ReadSentence() nogil except +
+#         bool_t IsEof() nogil
+#         void Reset() nogil
+
 cdef extern from "fast_line_sentence.h":
     cdef cppclass FastLineSentence:
         FastLineSentence() except +
@@ -28,6 +37,7 @@ cdef extern from "fast_line_sentence.h":
         vector[string] ReadSentence() nogil except +
         bool_t IsEof() nogil
         void Reset() nogil
+
 
 
 cdef class CythonLineSentence:
@@ -65,5 +75,5 @@ cdef class CythonVocab:
 
 
 cdef REAL_t get_alpha(REAL_t alpha, REAL_t end_alpha, int cur_epoch, int num_epochs) nogil
-cdef REAL_t get_next_alpha(REAL_t start_alpha, REAL_t end_alpha, int total_examples, int total_words,
-                           int expected_examples, int expected_words, int cur_epoch, int num_epochs) nogil
+cdef REAL_t get_next_alpha(REAL_t start_alpha, REAL_t end_alpha, long long total_examples, long long total_words,
+                           long long expected_examples, long long expected_words, int cur_epoch, int num_epochs) nogil
