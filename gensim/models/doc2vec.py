@@ -159,7 +159,7 @@ except ImportError:
         for doctag_index in doctag_indexes:
             for word in doc_words:
                 train_sg_pair(
-                    model, word, doctag_index, alpha, learn_vectors=learn_doctags, learn_hidden=learn_hidden,
+                    model, word, doctag_index, alpha, learn_vectors=learn_doctags, learn_hidden=learn_hidden and model.learn_hidden,
                     context_vectors=doctag_vectors, context_locks=doctag_locks
                 )
 
@@ -240,7 +240,7 @@ except ImportError:
             if model.cbow_mean and count > 1:
                 l1 /= count
             neu1e = train_cbow_pair(model, word, word2_indexes, l1, alpha,
-                                    learn_vectors=False, learn_hidden=learn_hidden)
+                                    learn_vectors=False, learn_hidden=learn_hidden and model.learn_hidden)
             if not model.cbow_mean and count > 1:
                 neu1e /= count
             if learn_doctags:
@@ -338,7 +338,7 @@ except ImportError:
             # numpy advanced-indexing copies; concatenate, flatten to 1d
             l1 = concatenate((doctag_vectors[doctag_indexes], word_vectors[word_context_indexes])).ravel()
             neu1e = train_cbow_pair(model, predict_word, None, l1, alpha,
-                                    learn_hidden=learn_hidden, learn_vectors=False)
+                                    learn_hidden=learn_hidden and model.learn_hidden, learn_vectors=False)
 
             # filter by locks and shape for addition to source vectors
             e_locks = concatenate((doctag_locks[doctag_indexes], word_locks[word_context_indexes]))
@@ -722,17 +722,17 @@ class Doc2Vec(BaseWordEmbeddingsModel):
             if self.sg:
                 tally += train_document_dbow(
                     self, doc.words, doctag_indexes, alpha, work, train_words=self.dbow_words,
-                    doctag_vectors=doctag_vectors, doctag_locks=doctag_locks
+                    doctag_vectors=doctag_vectors, doctag_locks=doctag_locks, learn_hidden=self.learn_hidden
                 )
             elif self.dm_concat:
                 tally += train_document_dm_concat(
                     self, doc.words, doctag_indexes, alpha, work, neu1,
-                    doctag_vectors=doctag_vectors, doctag_locks=doctag_locks
+                    doctag_vectors=doctag_vectors, doctag_locks=doctag_locks, learn_hidden=self.learn_hidden
                 )
             else:
                 tally += train_document_dm(
                     self, doc.words, doctag_indexes, alpha, work, neu1,
-                    doctag_vectors=doctag_vectors, doctag_locks=doctag_locks
+                    doctag_vectors=doctag_vectors, doctag_locks=doctag_locks, learn_hidden=self.learn_hidden
                 )
         return tally, self._raw_word_count(job)
 
