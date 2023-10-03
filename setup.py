@@ -245,15 +245,15 @@ if sys.version_info < (3, 7):
 
 ext_modules = [
     Extension('gensim.models.word2vec_inner',
-        sources=['./gensim/models/word2vec_inner.c'],
+        sources=['./gensim/models/word2vec_inner.pyx'],
         include_dirs=[model_dir]),
     Extension('gensim.models.doc2vec_inner',
-        sources=['./gensim/models/doc2vec_inner.c'],
+        sources=['./gensim/models/doc2vec_inner.pyx'],
         include_dirs=[model_dir]),
     Extension('gensim.corpora._mmreader',
         sources=['./gensim/corpora/_mmreader.c']),
     Extension('gensim.models.fasttext_inner',
-        sources=['./gensim/models/fasttext_inner.c'],
+        sources=['./gensim/models/fasttext_inner.pyx'],
         include_dirs=[model_dir]),
     Extension('gensim.models._utils_any2vec',
         sources=['./gensim/models/_utils_any2vec.c'],

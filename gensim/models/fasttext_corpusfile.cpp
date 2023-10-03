@@ -1717,7 +1717,7 @@ typedef __pyx_t_5numpy_float32_t __pyx_t_6gensim_6models_14word2vec_inner_REAL_t
  * 
  * ctypedef np.float32_t REAL_t             # <<<<<<<<<<<<<<
  * 
- * 
+ * cdef extern from "fast_line_sentence.h":
  */
 typedef __pyx_t_5numpy_float32_t __pyx_t_6gensim_6models_19word2vec_corpusfile_REAL_t;
 
@@ -1956,7 +1956,7 @@ struct __pyx_t_6gensim_6models_14fasttext_inner_FastTextConfig {
 };
 struct __pyx_t_6gensim_6models_19word2vec_corpusfile_VocabItem;
 
-/* "gensim/models/word2vec_corpusfile.pxd":57
+/* "gensim/models/word2vec_corpusfile.pxd":48
  * 
  * 
  * cdef struct VocabItem:             # <<<<<<<<<<<<<<
@@ -1973,7 +1973,7 @@ struct __pyx_t_6gensim_6models_19word2vec_corpusfile_VocabItem {
   __pyx_t_5numpy_uint32_t *subword_idx;
 };
 
-/* "gensim/models/word2vec_corpusfile.pxd":69
+/* "gensim/models/word2vec_corpusfile.pxd":60
  * 
  * 
  * ctypedef unordered_map[string, VocabItem] cvocab_t             # <<<<<<<<<<<<<<
@@ -1982,7 +1982,7 @@ struct __pyx_t_6gensim_6models_19word2vec_corpusfile_VocabItem {
  */
 typedef std::unordered_map<std::string,struct __pyx_t_6gensim_6models_19word2vec_corpusfile_VocabItem>  __pyx_t_6gensim_6models_19word2vec_corpusfile_cvocab_t;
 
-/* "gensim/models/word2vec_corpusfile.pxd":43
+/* "gensim/models/word2vec_corpusfile.pxd":34
  * 
  * 
  * cdef class CythonLineSentence:             # <<<<<<<<<<<<<<
@@ -2001,7 +2001,7 @@ struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonLineSentence {
 };
 
 
-/* "gensim/models/word2vec_corpusfile.pxd":71
+/* "gensim/models/word2vec_corpusfile.pxd":62
  * ctypedef unordered_map[string, VocabItem] cvocab_t
  * 
  * cdef class CythonVocab:             # <<<<<<<<<<<<<<
@@ -2017,7 +2017,7 @@ struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonVocab {
 
 
 
-/* "gensim/models/word2vec_corpusfile.pxd":43
+/* "gensim/models/word2vec_corpusfile.pxd":34
  * 
  * 
  * cdef class CythonLineSentence:             # <<<<<<<<<<<<<<
@@ -2036,7 +2036,7 @@ struct __pyx_vtabstruct_6gensim_6models_19word2vec_corpusfile_CythonLineSentence
 static struct __pyx_vtabstruct_6gensim_6models_19word2vec_corpusfile_CythonLineSentence *__pyx_vtabptr_6gensim_6models_19word2vec_corpusfile_CythonLineSentence;
 
 
-/* "gensim/models/word2vec_corpusfile.pxd":71
+/* "gensim/models/word2vec_corpusfile.pxd":62
  * ctypedef unordered_map[string, VocabItem] cvocab_t
  * 
  * cdef class CythonVocab:             # <<<<<<<<<<<<<<
@@ -6986,12 +6986,12 @@ static int __Pyx_modinit_type_import_code(void) {
   __pyx_ptype_5numpy_character = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "character", sizeof(PyObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyObject),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_5numpy_character) __PYX_ERR(1, 830, __pyx_L1_error)
   __pyx_ptype_5numpy_ufunc = __Pyx_ImportType_3_0_2(__pyx_t_1, "numpy", "ufunc", sizeof(PyUFuncObject), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(PyUFuncObject),__Pyx_ImportType_CheckSize_Ignore_3_0_2); if (!__pyx_ptype_5numpy_ufunc) __PYX_ERR(1, 868, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyImport_ImportModule("gensim.models.word2vec_corpusfile"); if (unlikely(!__pyx_t_1)) __PYX_ERR(3, 43, __pyx_L1_error)
+  __pyx_t_1 = PyImport_ImportModule("gensim.models.word2vec_corpusfile"); if (unlikely(!__pyx_t_1)) __PYX_ERR(3, 34, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonLineSentence = __Pyx_ImportType_3_0_2(__pyx_t_1, "gensim.models.word2vec_corpusfile", "CythonLineSentence", sizeof(struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonLineSentence), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonLineSentence),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonLineSentence) __PYX_ERR(3, 43, __pyx_L1_error)
-  __pyx_vtabptr_6gensim_6models_19word2vec_corpusfile_CythonLineSentence = (struct __pyx_vtabstruct_6gensim_6models_19word2vec_corpusfile_CythonLineSentence*)__Pyx_GetVtable(__pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonLineSentence); if (unlikely(!__pyx_vtabptr_6gensim_6models_19word2vec_corpusfile_CythonLineSentence)) __PYX_ERR(3, 43, __pyx_L1_error)
-  __pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonVocab = __Pyx_ImportType_3_0_2(__pyx_t_1, "gensim.models.word2vec_corpusfile", "CythonVocab", sizeof(struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonVocab), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonVocab),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonVocab) __PYX_ERR(3, 71, __pyx_L1_error)
-  __pyx_vtabptr_6gensim_6models_19word2vec_corpusfile_CythonVocab = (struct __pyx_vtabstruct_6gensim_6models_19word2vec_corpusfile_CythonVocab*)__Pyx_GetVtable(__pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonVocab); if (unlikely(!__pyx_vtabptr_6gensim_6models_19word2vec_corpusfile_CythonVocab)) __PYX_ERR(3, 71, __pyx_L1_error)
+  __pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonLineSentence = __Pyx_ImportType_3_0_2(__pyx_t_1, "gensim.models.word2vec_corpusfile", "CythonLineSentence", sizeof(struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonLineSentence), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonLineSentence),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonLineSentence) __PYX_ERR(3, 34, __pyx_L1_error)
+  __pyx_vtabptr_6gensim_6models_19word2vec_corpusfile_CythonLineSentence = (struct __pyx_vtabstruct_6gensim_6models_19word2vec_corpusfile_CythonLineSentence*)__Pyx_GetVtable(__pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonLineSentence); if (unlikely(!__pyx_vtabptr_6gensim_6models_19word2vec_corpusfile_CythonLineSentence)) __PYX_ERR(3, 34, __pyx_L1_error)
+  __pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonVocab = __Pyx_ImportType_3_0_2(__pyx_t_1, "gensim.models.word2vec_corpusfile", "CythonVocab", sizeof(struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonVocab), __PYX_GET_STRUCT_ALIGNMENT_3_0_2(struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonVocab),__Pyx_ImportType_CheckSize_Warn_3_0_2); if (!__pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonVocab) __PYX_ERR(3, 62, __pyx_L1_error)
+  __pyx_vtabptr_6gensim_6models_19word2vec_corpusfile_CythonVocab = (struct __pyx_vtabstruct_6gensim_6models_19word2vec_corpusfile_CythonVocab*)__Pyx_GetVtable(__pyx_ptype_6gensim_6models_19word2vec_corpusfile_CythonVocab); if (unlikely(!__pyx_vtabptr_6gensim_6models_19word2vec_corpusfile_CythonVocab)) __PYX_ERR(3, 62, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_RefNannyFinishContext();
   return 0;

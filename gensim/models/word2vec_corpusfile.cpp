@@ -1718,7 +1718,7 @@ typedef __pyx_t_5numpy_float32_t __pyx_t_6gensim_6models_14word2vec_inner_REAL_t
  * 
  * ctypedef np.float32_t REAL_t             # <<<<<<<<<<<<<<
  * 
- * 
+ * cdef extern from "fast_line_sentence.h":
  */
 typedef __pyx_t_5numpy_float32_t __pyx_t_6gensim_6models_19word2vec_corpusfile_REAL_t;
 /* #### Code section: complex_type_declarations ### */
@@ -1911,7 +1911,7 @@ struct __pyx_opt_args_6gensim_6models_14word2vec_inner_init_w2v_config {
 };
 struct __pyx_t_6gensim_6models_19word2vec_corpusfile_VocabItem;
 
-/* "gensim/models/word2vec_corpusfile.pxd":57
+/* "gensim/models/word2vec_corpusfile.pxd":48
  * 
  * 
  * cdef struct VocabItem:             # <<<<<<<<<<<<<<
@@ -1928,7 +1928,7 @@ struct __pyx_t_6gensim_6models_19word2vec_corpusfile_VocabItem {
   __pyx_t_5numpy_uint32_t *subword_idx;
 };
 
-/* "gensim/models/word2vec_corpusfile.pxd":69
+/* "gensim/models/word2vec_corpusfile.pxd":60
  * 
  * 
  * ctypedef unordered_map[string, VocabItem] cvocab_t             # <<<<<<<<<<<<<<
@@ -1937,7 +1937,7 @@ struct __pyx_t_6gensim_6models_19word2vec_corpusfile_VocabItem {
  */
 typedef std::unordered_map<std::string,struct __pyx_t_6gensim_6models_19word2vec_corpusfile_VocabItem>  __pyx_t_6gensim_6models_19word2vec_corpusfile_cvocab_t;
 
-/* "gensim/models/word2vec_corpusfile.pxd":43
+/* "gensim/models/word2vec_corpusfile.pxd":34
  * 
  * 
  * cdef class CythonLineSentence:             # <<<<<<<<<<<<<<
@@ -1956,7 +1956,7 @@ struct __pyx_obj_6gensim_6models_19word2vec_corpusfile_CythonLineSentence {
 };
 
 
-/* "gensim/models/word2vec_corpusfile.pxd":71
+/* "gensim/models/word2vec_corpusfile.pxd":62
  * ctypedef unordered_map[string, VocabItem] cvocab_t
  * 
  * cdef class CythonVocab:             # <<<<<<<<<<<<<<
@@ -9263,7 +9263,7 @@ static PyObject *__pyx_pf_6gensim_6models_19word2vec_corpusfile_18CythonLineSent
   return __pyx_r;
 }
 
-/* "gensim/models/word2vec_corpusfile.pxd":45
+/* "gensim/models/word2vec_corpusfile.pxd":36
  * cdef class CythonLineSentence:
  *     cdef FastLineSentence* _thisptr
  *     cdef public bytes source             # <<<<<<<<<<<<<<
@@ -9325,7 +9325,7 @@ static int __pyx_pf_6gensim_6models_19word2vec_corpusfile_18CythonLineSentence_6
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__set__", 0);
-  if (!(likely(PyBytes_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None) || __Pyx_RaiseUnexpectedTypeError("bytes", __pyx_v_value))) __PYX_ERR(3, 45, __pyx_L1_error)
+  if (!(likely(PyBytes_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None) || __Pyx_RaiseUnexpectedTypeError("bytes", __pyx_v_value))) __PYX_ERR(3, 36, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_value;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -9377,7 +9377,7 @@ static int __pyx_pf_6gensim_6models_19word2vec_corpusfile_18CythonLineSentence_6
   return __pyx_r;
 }
 
-/* "gensim/models/word2vec_corpusfile.pxd":46
+/* "gensim/models/word2vec_corpusfile.pxd":37
  *     cdef FastLineSentence* _thisptr
  *     cdef public bytes source
  *     cdef public size_t max_sentence_length, max_words_in_batch, offset             # <<<<<<<<<<<<<<
@@ -9409,7 +9409,7 @@ static PyObject *__pyx_pf_6gensim_6models_19word2vec_corpusfile_18CythonLineSent
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__get__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__pyx_v_self->max_sentence_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(3, 46, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__pyx_v_self->max_sentence_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(3, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -9449,7 +9449,7 @@ static int __pyx_pf_6gensim_6models_19word2vec_corpusfile_18CythonLineSentence_1
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__set__", 0);
-  __pyx_t_1 = __Pyx_PyInt_As_size_t(__pyx_v_value); if (unlikely((__pyx_t_1 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(3, 46, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_size_t(__pyx_v_value); if (unlikely((__pyx_t_1 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(3, 37, __pyx_L1_error)
   __pyx_v_self->max_sentence_length = __pyx_t_1;
 
   /* function exit code */
@@ -9487,7 +9487,7 @@ static PyObject *__pyx_pf_6gensim_6models_19word2vec_corpusfile_18CythonLineSent
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__get__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__pyx_v_self->max_words_in_batch); if (unlikely(!__pyx_t_1)) __PYX_ERR(3, 46, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__pyx_v_self->max_words_in_batch); if (unlikely(!__pyx_t_1)) __PYX_ERR(3, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -9527,7 +9527,7 @@ static int __pyx_pf_6gensim_6models_19word2vec_corpusfile_18CythonLineSentence_1
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__set__", 0);
-  __pyx_t_1 = __Pyx_PyInt_As_size_t(__pyx_v_value); if (unlikely((__pyx_t_1 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(3, 46, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_size_t(__pyx_v_value); if (unlikely((__pyx_t_1 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(3, 37, __pyx_L1_error)
   __pyx_v_self->max_words_in_batch = __pyx_t_1;
 
   /* function exit code */
@@ -9565,7 +9565,7 @@ static PyObject *__pyx_pf_6gensim_6models_19word2vec_corpusfile_18CythonLineSent
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__get__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__pyx_v_self->offset); if (unlikely(!__pyx_t_1)) __PYX_ERR(3, 46, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__pyx_v_self->offset); if (unlikely(!__pyx_t_1)) __PYX_ERR(3, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -9605,7 +9605,7 @@ static int __pyx_pf_6gensim_6models_19word2vec_corpusfile_18CythonLineSentence_6
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("__set__", 0);
-  __pyx_t_1 = __Pyx_PyInt_As_size_t(__pyx_v_value); if (unlikely((__pyx_t_1 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(3, 46, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_As_size_t(__pyx_v_value); if (unlikely((__pyx_t_1 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(3, 37, __pyx_L1_error)
   __pyx_v_self->offset = __pyx_t_1;
 
   /* function exit code */

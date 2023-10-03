@@ -21,15 +21,6 @@ cimport numpy as np
 
 ctypedef np.float32_t REAL_t
 
-
-# cdef extern from "fast_line_sentence.h":
-#     cdef cppclass FastLineSentence:
-#         FastLineSentence() except +
-#         FastLineSentence(string&, size_t) except +
-#         vector[string] ReadSentence() nogil except +
-#         bool_t IsEof() nogil
-#         void Reset() nogil
-
 cdef extern from "fast_line_sentence.h":
     cdef cppclass FastLineSentence:
         FastLineSentence() except +
