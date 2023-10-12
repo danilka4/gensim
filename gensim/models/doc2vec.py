@@ -475,6 +475,7 @@ class Doc2Vec(BaseWordEmbeddingsModel):
     """
     def __init__(self, documents=None, corpus_file=None, dm_mean=None, dm=1, dbow_words=0, dm_concat=0,
                  dm_tag_count=1, docvecs=None, docvecs_mapfile=None, comment=None, trim_rule=None, callbacks=(),
+                 learn_hidden=True,
                  **kwargs):
         """
 
@@ -593,6 +594,7 @@ class Doc2Vec(BaseWordEmbeddingsModel):
         self.dbow_words = int(dbow_words)
         self.dm_concat = int(dm_concat)
         self.dm_tag_count = int(dm_tag_count)
+        self.learn_hidden = int(learn_hidden)
 
         kwargs['null_word'] = dm_concat
         vocabulary_keys = ['max_vocab_size', 'min_count', 'sample', 'sorted_vocab', 'null_word', 'ns_exponent']
