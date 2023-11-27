@@ -98,7 +98,7 @@ except ImportError:
     # failed... fall back to plain numpy (20-80x slower training than the above)
     FAST_VERSION = -1
 
-    def train_document_dbow(model, doc_words, doctag_indexes, alpha, work=None,
+    def train_document_dbow(model, doc_words, doctag_indexes, alpha, alpha_d, work=None,
                             train_words=False, learn_doctags=True, learn_words=True, learn_hidden=True,
                             word_vectors=None, word_locks=None, doctag_vectors=None, doctag_locks=None):
         """Update distributed bag of words model ("PV-DBOW") by training on a single document.
@@ -122,6 +122,8 @@ except ImportError:
             Indices into `doctag_vectors` used to obtain the tags of the document.
         alpha : float
             Learning rate.
+        alpha_d : float
+            Learning rate for document tags.
         work : np.ndarray
             Private working memory for each worker.
         train_words : bool, optional
@@ -159,13 +161,13 @@ except ImportError:
         for doctag_index in doctag_indexes:
             for word in doc_words:
                 train_sg_pair(
-                    model, word, doctag_index, alpha, learn_vectors=learn_doctags, learn_hidden=learn_hidden and model.learn_hidden,
+                    model, word, doctag_index, alpha_d, learn_vectors=learn_doctags, learn_hidden=learn_hidden and model.learn_hidden,
                     context_vectors=doctag_vectors, context_locks=doctag_locks
                 )
 
         return len(doc_words)
 
-    def train_document_dm(model, doc_words, doctag_indexes, alpha, work=None, neu1=None,
+    def train_document_dm(model, doc_words, doctag_indexes, alpha, alpha_d, work=None, neu1=None,
                           learn_doctags=True, learn_words=True, learn_hidden=True,
                           word_vectors=None, word_locks=None, doctag_vectors=None, doctag_locks=None):
         """Update distributed memory model ("PV-DM") by training on a single document.
@@ -191,6 +193,8 @@ except ImportError:
             Indices into `doctag_vectors` used to obtain the tags of the document.
         alpha : float
             Learning rate.
+        alpha_d : float
+            Learning rate for document tags.
         work : object
             UNUSED.
         neu1 : object
@@ -243,16 +247,17 @@ except ImportError:
                                     learn_vectors=False, learn_hidden=learn_hidden and model.learn_hidden)
             if not model.cbow_mean and count > 1:
                 neu1e /= count
-            if learn_doctags:
-                for i in doctag_indexes:
-                    doctag_vectors[i] += neu1e * doctag_locks[i]
             if learn_words:
                 for i in word2_indexes:
                     word_vectors[i] += neu1e * word_locks[i]
+            if learn_doctags:
+                neu1e = neu1e * alpha_d / alpha
+                for i in doctag_indexes:
+                    doctag_vectors[i] += neu1e * doctag_locks[i]
 
         return len(word_vocabs)
 
-    def train_document_dm_concat(model, doc_words, doctag_indexes, alpha, work=None, neu1=None, learn_doctags=True,
+    def train_document_dm_concat(model, doc_words, doctag_indexes, alpha, alpha_d, work=None, neu1=None, learn_doctags=True,
                                  learn_words=True, learn_hidden=True, word_vectors=None, word_locks=None,
                                  doctag_vectors=None, doctag_locks=None):
         """Update distributed memory model ("PV-DM") by training on a single document, using a
@@ -278,6 +283,8 @@ except ImportError:
             Indices into `doctag_vectors` used to obtain the tags of the document.
         alpha : float
             Learning rate.
+        alpha_d : float
+            Learning rate for document tags.
         work : object
             UNUSED.
         neu1 : object
@@ -345,10 +352,11 @@ except ImportError:
             neu1e_r = (neu1e.reshape(-1, model.vector_size)
                        * np_repeat(e_locks, model.vector_size).reshape(-1, model.vector_size))
 
-            if learn_doctags:
-                np_add.at(doctag_vectors, doctag_indexes, neu1e_r[:doctag_len])
             if learn_words:
                 np_add.at(word_vectors, word_context_indexes, neu1e_r[doctag_len:])
+            if learn_doctags:
+                neu1e_r = neu1e_r * alpha_d / alpha
+                np_add.at(doctag_vectors, doctag_indexes, neu1e_r[:doctag_len])
 
         return len(padded_document_indexes) - pre_pad_count - post_pad_count
 
@@ -498,6 +506,8 @@ class Doc2Vec(BaseWordEmbeddingsModel):
             The maximum distance between the current and predicted word within a sentence.
         alpha : float, optional
             The initial learning rate.
+        alpha_d : float
+            Learning rate for document tags.
         min_alpha : float, optional
             Learning rate will linearly drop to `min_alpha` as training progresses.
         seed : int, optional
@@ -595,6 +605,7 @@ class Doc2Vec(BaseWordEmbeddingsModel):
         self.dm_concat = int(dm_concat)
         self.dm_tag_count = int(dm_tag_count)
         self.learn_hidden = int(learn_hidden)
+        self.alpha_d = self.alpha
 
         kwargs['null_word'] = dm_concat
         vocabulary_keys = ['max_vocab_size', 'min_count', 'sample', 'sorted_vocab', 'null_word', 'ns_exponent']
@@ -621,7 +632,7 @@ class Doc2Vec(BaseWordEmbeddingsModel):
             self.build_vocab(documents=documents, corpus_file=corpus_file, trim_rule=trim_rule)
             self.train(
                 documents=documents, corpus_file=corpus_file, total_examples=self.corpus_count,
-                total_words=self.corpus_total_words, epochs=self.epochs, start_alpha=self.alpha,
+                total_words=self.corpus_total_words, epochs=self.epochs, start_alpha=self.alpha, alpha_d = self.alpha_d,
                 end_alpha=self.min_alpha, callbacks=callbacks)
 
     @property
@@ -723,17 +734,17 @@ class Doc2Vec(BaseWordEmbeddingsModel):
             doctag_locks = self.trainables.vectors_docs_lockf
             if self.sg:
                 tally += train_document_dbow(
-                    self, doc.words, doctag_indexes, alpha, work, train_words=self.dbow_words,
+                    self, doc.words, doctag_indexes, alpha, self.alpha_d, work, train_words=self.dbow_words,
                     doctag_vectors=doctag_vectors, doctag_locks=doctag_locks, learn_hidden=self.learn_hidden
                 )
             elif self.dm_concat:
                 tally += train_document_dm_concat(
-                    self, doc.words, doctag_indexes, alpha, work, neu1,
+                    self, doc.words, doctag_indexes, alpha, self.alpha_d, work, neu1,
                     doctag_vectors=doctag_vectors, doctag_locks=doctag_locks, learn_hidden=self.learn_hidden
                 )
             else:
                 tally += train_document_dm(
-                    self, doc.words, doctag_indexes, alpha, work, neu1,
+                    self, doc.words, doctag_indexes, alpha, self.alpha_d, work, neu1,
                     doctag_vectors=doctag_vectors, doctag_locks=doctag_locks, learn_hidden=self.learn_hidden
                 )
         return tally, self._raw_word_count(job)
@@ -906,7 +917,7 @@ class Doc2Vec(BaseWordEmbeddingsModel):
             The inferred paragraph vector for the new document.
 
         """
-        alpha = alpha or self.alpha
+        alpha = alpha or self.alpha_d
         min_alpha = min_alpha or self.min_alpha
         epochs = epochs or steps or self.epochs
 
@@ -921,17 +932,17 @@ class Doc2Vec(BaseWordEmbeddingsModel):
         for i in range(epochs):
             if self.sg:
                 train_document_dbow(
-                    self, doc_words, doctag_indexes, alpha, work,
+                    self, doc_words, doctag_indexes, alpha, alpha, work,
                     learn_words=False, learn_hidden=False, doctag_vectors=doctag_vectors, doctag_locks=doctag_locks
                 )
             elif self.dm_concat:
                 train_document_dm_concat(
-                    self, doc_words, doctag_indexes, alpha, work, neu1,
+                    self, doc_words, doctag_indexes, alpha, alpha, work, neu1,
                     learn_words=False, learn_hidden=False, doctag_vectors=doctag_vectors, doctag_locks=doctag_locks
                 )
             else:
                 train_document_dm(
-                    self, doc_words, doctag_indexes, alpha, work, neu1,
+                    self, doc_words, doctag_indexes, alpha, alpha, work, neu1,
                     learn_words=False, learn_hidden=False, doctag_vectors=doctag_vectors, doctag_locks=doctag_locks
                 )
             alpha -= alpha_delta

@@ -32,6 +32,8 @@ cdef struct Doc2VecConfig:
     REAL_t *work
     REAL_t *neu1
     REAL_t alpha
+    REAL_t alpha_d
+    REAL_t alpha_ratio
     int layer1_size, vector_size
 
     int codelens[MAX_DOCUMENT_LEN]
@@ -89,5 +91,5 @@ cdef unsigned long long fast_document_dmc_neg(
     const int layer1_size, const int vector_size, int learn_hidden) nogil
 
 
-cdef init_d2v_config(Doc2VecConfig *c, model, alpha, learn_doctags, learn_words, learn_hidden, train_words=*, work=*,
+cdef init_d2v_config(Doc2VecConfig *c, model, alpha, alpha_d, learn_doctags, learn_words, learn_hidden, train_words=*, work=*,
                      neu1=*, word_vectors=*, word_locks=*, doctag_vectors=*, doctag_locks=*, docvecs_count=*)

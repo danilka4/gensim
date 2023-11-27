@@ -145,8 +145,10 @@ def d2v_train_epoch_dbow(model, corpus_file, offset, start_doctag, _cython_vocab
     cdef long long expected_examples = (-1 if _expected_examples is None else _expected_examples)
     cdef long long expected_words = (-1 if _expected_words is None else _expected_words)
     cdef REAL_t start_alpha = model.alpha
+    cdef REAL_t start_alpha_d = model.alpha_d
     cdef REAL_t end_alpha = model.min_alpha
     cdef REAL_t _alpha = get_alpha(model.alpha, end_alpha, cur_epoch, num_epochs)
+    cdef REAL_t _alpha_d = get_alpha(model.alpha_d, end_alpha, cur_epoch, num_epochs)
 
     cdef CythonLineSentence input_stream = CythonLineSentence(corpus_file, offset)
     cdef CythonVocab vocab = _cython_vocab
@@ -160,7 +162,7 @@ def d2v_train_epoch_dbow(model, corpus_file, offset, start_doctag, _cython_vocab
     cdef int _doc_tag = start_doctag
 
     init_d2v_config(
-        &c, model, _alpha, learn_doctags, learn_words, learn_hidden, train_words=train_words,
+        &c, model, _alpha, _alpha_d, learn_doctags, learn_words, learn_hidden, train_words=train_words,
         work=work, neu1=neu1, word_vectors=word_vectors, word_locks=word_locks,
         doctag_vectors=doctag_vectors, doctag_locks=doctag_locks, docvecs_count=docvecs_count)
 
@@ -209,12 +211,12 @@ def d2v_train_epoch_dbow(model, corpus_file, offset, start_doctag, _cython_vocab
                     if c.hs:
                         fast_document_dbow_hs(
                             c.points[i], c.codes[i], c.codelens[i], c.doctag_vectors, c.syn1, c.layer1_size,
-                            _doc_tag, c.alpha, c.work, c.learn_doctags, c.learn_hidden, c.doctag_locks)
+                            _doc_tag, c.alpha_d, c.work, c.learn_doctags, c.learn_hidden, c.doctag_locks)
 
                     if c.negative:
                         c.next_random = fast_document_dbow_neg(
                             c.negative, c.cum_table, c.cum_table_len, c.doctag_vectors, c.syn1neg,
-                            c.layer1_size, c.indexes[i], _doc_tag, c.alpha, c.work, c.next_random,
+                            c.layer1_size, c.indexes[i], _doc_tag, c.alpha_d, c.work, c.next_random,
                             c.learn_doctags, c.learn_hidden, c.doctag_locks)
 
             total_documents += 1
@@ -223,6 +225,9 @@ def d2v_train_epoch_dbow(model, corpus_file, offset, start_doctag, _cython_vocab
 
             c.alpha = get_next_alpha(
                 start_alpha, end_alpha, total_documents, total_words,
+                expected_examples, expected_words, cur_epoch, num_epochs)
+            c.alpha_d = get_next_alpha(
+                start_alpha_d, end_alpha, total_documents, total_words,
                 expected_examples, expected_words, cur_epoch, num_epochs)
 
     return total_documents, total_effective_words, total_words
@@ -279,8 +284,10 @@ def d2v_train_epoch_dm(model, corpus_file, offset, start_doctag, _cython_vocab, 
     cdef long long expected_examples = (-1 if _expected_examples is None else _expected_examples)
     cdef long long expected_words = (-1 if _expected_words is None else _expected_words)
     cdef REAL_t start_alpha = model.alpha
+    cdef REAL_t start_alpha_d = model.alpha_d
     cdef REAL_t end_alpha = model.min_alpha
     cdef REAL_t _alpha = get_alpha(model.alpha, end_alpha, cur_epoch, num_epochs)
+    cdef REAL_t _alpha_d = get_alpha(model.alpha_d, end_alpha, cur_epoch, num_epochs)
 
     cdef CythonLineSentence input_stream = CythonLineSentence(corpus_file, offset)
     cdef CythonVocab vocab = _cython_vocab
@@ -295,7 +302,7 @@ def d2v_train_epoch_dm(model, corpus_file, offset, start_doctag, _cython_vocab, 
     cdef long long _doc_tag = start_doctag
 
     init_d2v_config(
-        &c, model, _alpha, learn_doctags, learn_words, learn_hidden, train_words=False,
+        &c, model, _alpha, _alpha_d, learn_doctags, learn_words, learn_hidden, train_words=False,
         work=work, neu1=neu1, word_vectors=word_vectors, word_locks=word_locks,
         doctag_vectors=doctag_vectors, doctag_locks=doctag_locks, docvecs_count=docvecs_count)
 
@@ -354,9 +361,6 @@ def d2v_train_epoch_dm(model, corpus_file, offset, start_doctag, _cython_vocab, 
                 if not c.cbow_mean:
                     sscal(&c.layer1_size, &inv_count, c.work, &ONE)  # (does this need BLAS-variants like saxpy?)
                 # apply accumulated error in work
-                if c.learn_doctags and _doc_tag < c.docvecs_count:
-                    our_saxpy(&c.layer1_size, &c.doctag_locks[_doc_tag], c.work,
-                              &ONE, &c.doctag_vectors[_doc_tag * c.layer1_size], &ONE)
                 if c.learn_words:
                     for m in range(j, k):
                         if m == i:
@@ -364,6 +368,10 @@ def d2v_train_epoch_dm(model, corpus_file, offset, start_doctag, _cython_vocab, 
                         else:
                              our_saxpy(&c.layer1_size, &c.word_locks[c.indexes[m]], c.work, &ONE,
                                        &c.word_vectors[c.indexes[m] * c.layer1_size], &ONE)
+                if c.learn_doctags and _doc_tag < c.docvecs_count:
+                    sscal(&c.layer1_size, &c.alpha_ratio, c.work, &ONE)  # (does this need BLAS-variants like saxpy?)
+                    our_saxpy(&c.layer1_size, &c.doctag_locks[_doc_tag], c.work,
+                              &ONE, &c.doctag_vectors[_doc_tag * c.layer1_size], &ONE)
 
             total_documents += 1
             total_effective_words += effective_words
@@ -371,6 +379,9 @@ def d2v_train_epoch_dm(model, corpus_file, offset, start_doctag, _cython_vocab, 
 
             c.alpha = get_next_alpha(start_alpha, end_alpha, total_documents, total_words, expected_examples,
                                     expected_words, cur_epoch, num_epochs)
+            c.alpha_d = get_next_alpha(
+                start_alpha_d, end_alpha, total_documents, total_words,
+                expected_examples, expected_words, cur_epoch, num_epochs)
 
     return total_documents, total_effective_words, total_words
 
@@ -427,8 +438,10 @@ def d2v_train_epoch_dm_concat(model, corpus_file, offset, start_doctag, _cython_
     cdef long long expected_examples = (-1 if _expected_examples is None else _expected_examples)
     cdef long long expected_words = (-1 if _expected_words is None else _expected_words)
     cdef REAL_t start_alpha = model.alpha
+    cdef REAL_t start_alpha_d = model.alpha_d
     cdef REAL_t end_alpha = model.min_alpha
     cdef REAL_t _alpha = get_alpha(model.alpha, end_alpha, cur_epoch, num_epochs)
+    cdef REAL_t _alpha_d = get_alpha(model.alpha_d, end_alpha, cur_epoch, num_epochs)
 
     cdef CythonLineSentence input_stream = CythonLineSentence(corpus_file, offset)
     cdef CythonVocab vocab = _cython_vocab
@@ -442,7 +455,7 @@ def d2v_train_epoch_dm_concat(model, corpus_file, offset, start_doctag, _cython_
     cdef int _doc_tag = start_doctag
 
     init_d2v_config(
-        &c, model, _alpha, learn_doctags, learn_words, learn_hidden, train_words=False,
+        &c, model, _alpha, _alpha_d, learn_doctags, learn_words, learn_hidden, train_words=False,
         work=work, neu1=neu1, word_vectors=word_vectors, word_locks=word_locks,
         doctag_vectors=doctag_vectors, doctag_locks=doctag_locks, docvecs_count=docvecs_count)
 
@@ -499,13 +512,15 @@ def d2v_train_epoch_dm_concat(model, corpus_file, offset, start_doctag, _cython_
                         c.negative, c.cum_table, c.cum_table_len, c.next_random, c.neu1, c.syn1neg,
                         c.indexes[i], c.alpha, c.work, c.layer1_size, c.vector_size, c.learn_hidden)
 
-                if c.learn_doctags and _doc_tag < c.docvecs_count:
-                    our_saxpy(&c.vector_size, &c.doctag_locks[_doc_tag], &c.work[m * c.vector_size],
-                              &ONE, &c.doctag_vectors[_doc_tag * c.vector_size], &ONE)
                 if c.learn_words:
                     for m in range(2 * c.window):
                         our_saxpy(&c.vector_size, &c.word_locks[c.window_indexes[m]], &c.work[(c.doctag_len + m) * c.vector_size],
                                   &ONE, &c.word_vectors[c.window_indexes[m] * c.vector_size], &ONE)
+
+                if c.learn_doctags and _doc_tag < c.docvecs_count:
+                    sscal(&c.layer1_size, &c.alpha_ratio, c.work, &ONE)  # (does this need BLAS-variants like saxpy?)
+                    our_saxpy(&c.vector_size, &c.doctag_locks[_doc_tag], &c.work[m * c.vector_size],
+                              &ONE, &c.doctag_vectors[_doc_tag * c.vector_size], &ONE)
 
             total_documents += 1
             total_effective_words += effective_words
@@ -513,6 +528,9 @@ def d2v_train_epoch_dm_concat(model, corpus_file, offset, start_doctag, _cython_
 
             c.alpha = get_next_alpha(start_alpha, end_alpha, total_documents, total_words, expected_examples,
                                     expected_words, cur_epoch, num_epochs)
+            c.alpha_d = get_next_alpha(
+                start_alpha_d, end_alpha, total_documents, total_words,
+                expected_examples, expected_words, cur_epoch, num_epochs)
 
     return total_documents, total_effective_words, total_words
 

@@ -221,7 +221,7 @@ cdef unsigned long long fast_document_dmc_neg(
     return next_random
 
 
-cdef init_d2v_config(Doc2VecConfig *c, model, alpha, learn_doctags, learn_words, learn_hidden,
+cdef init_d2v_config(Doc2VecConfig *c, model, alpha, alpha_d, learn_doctags, learn_words, learn_hidden,
                      train_words=False, work=None, neu1=None, word_vectors=None, word_locks=None, doctag_vectors=None,
                      doctag_locks=None, docvecs_count=0):
     c[0].hs = model.hs
@@ -233,6 +233,8 @@ cdef init_d2v_config(Doc2VecConfig *c, model, alpha, learn_doctags, learn_words,
     c[0].learn_words = learn_words
     c[0].learn_hidden = learn_hidden
     c[0].alpha = alpha
+    c[0].alpha_d = alpha_d
+    c[0].alpha_ratio = alpha_d / alpha
     c[0].layer1_size = model.trainables.layer1_size
     c[0].vector_size = model.docvecs.vector_size
     c[0].workers = model.workers
@@ -278,7 +280,7 @@ cdef init_d2v_config(Doc2VecConfig *c, model, alpha, learn_doctags, learn_words,
 
 
 
-def train_document_dbow(model, doc_words, doctag_indexes, alpha, work=None,
+def train_document_dbow(model, doc_words, doctag_indexes, alpha, alpha_d, work=None,
                         train_words=False, learn_doctags=True, learn_words=True, learn_hidden=True,
                         word_vectors=None, word_locks=None, doctag_vectors=None, doctag_locks=None):
     """Update distributed bag of words model ("PV-DBOW") by training on a single document.
@@ -330,7 +332,7 @@ def train_document_dbow(model, doc_words, doctag_indexes, alpha, work=None,
     cdef int i, j
     cdef long result = 0
 
-    init_d2v_config(&c, model, alpha, learn_doctags, learn_words, learn_hidden, train_words=train_words, work=work,
+    init_d2v_config(&c, model, alpha, alpha_d, learn_doctags, learn_words, learn_hidden, train_words=train_words, work=work,
                     neu1=None, word_vectors=word_vectors, word_locks=word_locks,
                     doctag_vectors=doctag_vectors, doctag_locks=doctag_locks)
 
@@ -392,17 +394,17 @@ def train_document_dbow(model, doc_words, doctag_indexes, alpha, work=None,
             for j in range(c.doctag_len):
                 if c.hs:
                     fast_document_dbow_hs(c.points[i], c.codes[i], c.codelens[i], c.doctag_vectors, c.syn1, c.layer1_size,
-                                          c.doctag_indexes[j], c.alpha, c.work, c.learn_doctags, c.learn_hidden, c.doctag_locks)
+                                          c.doctag_indexes[j], c.alpha_d, c.work, c.learn_doctags, c.learn_hidden, c.doctag_locks)
                 if c.negative:
                     c.next_random = fast_document_dbow_neg(c.negative, c.cum_table, c.cum_table_len, c.doctag_vectors,
                                                            c.syn1neg, c.layer1_size, c.indexes[i], c.doctag_indexes[j],
-                                                           c.alpha, c.work, c.next_random, c.learn_doctags,
+                                                           c.alpha_d, c.work, c.next_random, c.learn_doctags,
                                                            c.learn_hidden, c.doctag_locks)
 
     return result
 
 
-def train_document_dm(model, doc_words, doctag_indexes, alpha, work=None, neu1=None,
+def train_document_dm(model, doc_words, doctag_indexes, alpha, alpha_d, work=None, neu1=None,
                       learn_doctags=True, learn_words=True, learn_hidden=True,
                       word_vectors=None, word_locks=None, doctag_vectors=None, doctag_locks=None):
     """Update distributed memory model ("PV-DM") by training on a single document.
@@ -423,6 +425,8 @@ def train_document_dm(model, doc_words, doctag_indexes, alpha, work=None, neu1=N
         Indices into `doctag_vectors` used to obtain the tags of the document.
     alpha : float
         Learning rate.
+    alpha_d: float
+        Learning rate for document.
     work : np.ndarray, optional
         Private working memory for each worker.
     neu1 : np.ndarray, optional
@@ -456,7 +460,7 @@ def train_document_dm(model, doc_words, doctag_indexes, alpha, work=None, neu1=N
     cdef int i, j, k, m
     cdef long result = 0
 
-    init_d2v_config(&c, model, alpha, learn_doctags, learn_words, learn_hidden, train_words=False,
+    init_d2v_config(&c, model, alpha, alpha_d, learn_doctags, learn_words, learn_hidden, train_words=False,
                     work=work, neu1=neu1, word_vectors=word_vectors, word_locks=word_locks,
                     doctag_vectors=doctag_vectors, doctag_locks=doctag_locks)
 
@@ -526,11 +530,6 @@ def train_document_dm(model, doc_words, doctag_indexes, alpha, work=None, neu1=N
 
             if not c.cbow_mean:
                 sscal(&c.layer1_size, &inv_count, c.work, &ONE)  # (does this need BLAS-variants like saxpy?)
-            # apply accumulated error in work
-            if c.learn_doctags:
-                for m in range(c.doctag_len):
-                    our_saxpy(&c.layer1_size, &c.doctag_locks[c.doctag_indexes[m]], c.work,
-                              &ONE, &c.doctag_vectors[c.doctag_indexes[m] * c.layer1_size], &ONE)
             if c.learn_words:
                 for m in range(j, k):
                     if m == i:
@@ -538,11 +537,18 @@ def train_document_dm(model, doc_words, doctag_indexes, alpha, work=None, neu1=N
                     else:
                          our_saxpy(&c.layer1_size, &c.word_locks[c.indexes[m]], c.work, &ONE,
                                    &c.word_vectors[c.indexes[m] * c.layer1_size], &ONE)
+            # apply accumulated error in work
+            if c.learn_doctags:
+                # Allows for different scales between document and work vectors
+                sscal(&c.layer1_size, &c.alpha_ratio, c.work, &ONE)  # (does this need BLAS-variants like saxpy?)
+                for m in range(c.doctag_len):
+                    our_saxpy(&c.layer1_size, &c.doctag_locks[c.doctag_indexes[m]], c.work,
+                              &ONE, &c.doctag_vectors[c.doctag_indexes[m] * c.layer1_size], &ONE)
 
     return result
 
 
-def train_document_dm_concat(model, doc_words, doctag_indexes, alpha, work=None, neu1=None,
+def train_document_dm_concat(model, doc_words, doctag_indexes, alpha, alpha_d, work=None, neu1=None,
                              learn_doctags=True, learn_words=True, learn_hidden=True,
                              word_vectors=None, word_locks=None, doctag_vectors=None, doctag_locks=None):
     """Update distributed memory model ("PV-DM") by training on a single document, using a concatenation of the context
@@ -595,7 +601,7 @@ def train_document_dm_concat(model, doc_words, doctag_indexes, alpha, work=None,
     cdef int i, j, k, m, n
     cdef long result = 0
 
-    init_d2v_config(&c, model, alpha, learn_doctags, learn_words, learn_hidden, train_words=False, work=work, neu1=neu1,
+    init_d2v_config(&c, model, alpha, alpha_d, learn_doctags, learn_words, learn_hidden, train_words=False, work=work, neu1=neu1,
                     word_vectors=word_vectors, word_locks=word_locks, doctag_vectors=doctag_vectors, doctag_locks=doctag_locks)
 
     c.doctag_len = <int>min(MAX_DOCUMENT_LEN, len(doctag_indexes))
@@ -661,13 +667,15 @@ def train_document_dm_concat(model, doc_words, doctag_indexes, alpha, work=None,
                                                       c.neu1, c.syn1neg, c.indexes[i], c.alpha, c.work,
                                                       c.layer1_size, c.vector_size, c.learn_hidden)
 
-            if c.learn_doctags:
-                for m in range(c.doctag_len):
-                    our_saxpy(&c.vector_size, &c.doctag_locks[c.doctag_indexes[m]], &c.work[m * c.vector_size],
-                              &ONE, &c.doctag_vectors[c.doctag_indexes[m] * c.vector_size], &ONE)
             if c.learn_words:
                 for m in range(2 * c.window):
                     our_saxpy(&c.vector_size, &c.word_locks[c.window_indexes[m]], &c.work[(c.doctag_len + m) * c.vector_size],
                               &ONE, &c.word_vectors[c.window_indexes[m] * c.vector_size], &ONE)
+            if c.learn_doctags:
+                # Allows for different scales between document and work vectors
+                sscal(&c.layer1_size, &c.alpha_ratio, c.work, &ONE)  # (does this need BLAS-variants like saxpy?)
+                for m in range(c.doctag_len):
+                    our_saxpy(&c.vector_size, &c.doctag_locks[c.doctag_indexes[m]], &c.work[m * c.vector_size],
+                              &ONE, &c.doctag_vectors[c.doctag_indexes[m] * c.vector_size], &ONE)
 
     return result
